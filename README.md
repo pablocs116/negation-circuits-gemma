@@ -41,7 +41,7 @@ graphs/
 ## Setup
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/negation-circuits-gemma
+git clone https://github.com/pablocs116/negation-circuits-gemma
 cd negation-circuits-gemma
 pip install circuit-tracer
 ```
