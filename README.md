@@ -5,7 +5,8 @@
 ![Method](https://img.shields.io/badge/method-circuit--tracing-purple)
 
 Mechanistic interpretability study of how Gemma-2-2b handles negation,
-using attribution graphs from Anthropic's open-source circuit-tracer.
+using attribution graphs generated via the [Neuronpedia](https://www.neuronpedia.org)
+circuit-tracing API — no local GPU required.
 
 ## Hypothesis
 
@@ -27,31 +28,59 @@ the model to output the wrong (unnegated) answer.
 
 ## Structure
 
+```
 notebooks/
 ├── 01_exploration.ipynb        # first attribution graphs, intuition building
-├── 02_negation_analysis.ipynb  # main experiment: negation circuit mapping
-└── 03_patching_experiments.ipynb  # causal patching to test hypotheses
+├── 02_negation_analysis.ipynb  # main experiment: negation circuit mapping (stub)
+└── 03_patching_experiments.ipynb  # causal patching to test hypotheses (stub)
+
+scripts/
+├── generate_graph.py           # generate one attribution graph via Neuronpedia API
+├── batch_generate.py           # generate the 5 core negation prompts
+└── analyze_graphs.py           # fetch full graphs, reproduce overlap/control analysis
 
 experiments/
-└── log.md                      # dated lab notebook
+└── log.md                      # dated lab notebook (experiments 1–5)
 
 graphs/
-└── *.json                      # saved attribution graphs
+└── *.json                      # saved graph metadata (gitignored; regenerate via scripts)
+```
 
 ## Setup
 
 ```bash
 git clone https://github.com/pablocs116/negation-circuits-gemma
 cd negation-circuits-gemma
-pip install circuit-tracer
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+
+cp .env.example .env          # then paste your Neuronpedia API key into .env
+python scripts/generate_graph.py
 ```
 
-All experiments run on a free Colab T4 GPU. See notebooks/01_exploration.ipynb
-to get started.
+Graphs are generated server-side by the Neuronpedia API — no local model, GPU,
+or CUDA needed. Get a free API key at https://www.neuronpedia.org. See CLAUDE.md
+for the full step-by-step setup.
 
-## Key findings
+## Key findings (experiments 1–5)
 
-🔜 In progress — check back in July 2025
+- **A domain-general negation circuit exists.** Across 5 domains (geography,
+  physics, astronomy, history, tech), a small set of late-layer features fires
+  on negated prompts.
+- **The circuit is narrow and late.** Only ~3 features are truly negation-specific
+  (present in negation graphs, absent in affirmative controls), all at layers
+  24–25: `L25/167884`, `L24/16207946`, `L24/18147275`. `L25/167884` is the single
+  most robust — 5/5 negation graphs, 0/5 controls.
+- **Mid-layer features are shared with controls** — they handle factual retrieval,
+  not negation. The negation circuit acts as a late-layer suppression gate on the
+  retrieval pathway, not a broad mid-layer mechanism.
+- **Surface-form invariant.** The same L24–25 features fire for NOT / NEVER /
+  ISN'T / NO, suggesting they encode semantic negation rather than a lexical
+  pattern.
+
+Full details and Neuronpedia graph URLs in [`experiments/log.md`](experiments/log.md).
+Next step: ablation — disable the L24–25 features and check whether the model
+reverts to the un-negated answer.
 
 ## References
 
@@ -59,8 +88,8 @@ to get started.
   https://transformer-circuits.pub/2025/attribution-graphs/methods.html
 - Lindsey et al. (2024) — Crosscoders / Transcoders
   https://transformer-circuits.pub/2024/crosscoders/index.html
-- circuit-tracer library
-  https://github.com/decoderesearch/circuit-tracer
+- Neuronpedia circuit tracer
+  https://www.neuronpedia.org/gemma-2-2b/graph
 
 ## Author
 

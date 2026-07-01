@@ -20,6 +20,7 @@ def generate_graph(prompt, slug=None):
 
 
 def save_graph_metadata(graph_metadata, name):
+    os.makedirs("graphs", exist_ok=True)
     path = f"graphs/{name}.json"
     data = {
         "id": graph_metadata.id,
